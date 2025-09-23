@@ -81,7 +81,7 @@ public class SweetRay : MonoBehaviour
         }
     }
 
-    private void ShiftSweets()
+    public void ShiftSweets()
     {
         Vector3 curPos = transform.position + dir * ((transform.localScale.x >= transform.localScale.z ? transform.localScale.x : transform.localScale.z) / 2 - 0.05f);
 

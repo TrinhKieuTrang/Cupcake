@@ -6,6 +6,7 @@ public class BoardManager : MonoBehaviour
     public int cols = 8;
     public int rows = 8;
     public float cellSize = 1f;
+    [SerializeField] private Transform board;
     private Tray[,] grid;
     private bool[,] hasTile;
     private Vector2Int offset;
@@ -23,7 +24,7 @@ public class BoardManager : MonoBehaviour
             sweetRays[pos] = ray;
         }
 
-        foreach(Transform trans in transform.GetChild(0))
+        foreach(Transform trans in board.GetChild(0))
         {
             Vector2Int pos = WorldToGrid(trans.position);
             if (pos.x >= 0 && pos.y >= 0 && pos.x < cols && pos.y < rows)
@@ -47,7 +48,7 @@ public class BoardManager : MonoBehaviour
         return new Vector3(x * cellSize, 0, y * cellSize);
     }
 
-    public bool CanMoveTo(Tray tray, Vector2Int startPos, Vector2Int gridPos, Vector2Int[] occupiedCells)
+    public bool CanMoveTo(Tray tray, Vector2Int startPos, Vector2Int gridPos, List<Vector2Int> occupiedCells)
     {
         foreach (var cell in occupiedCells)
         {
@@ -77,7 +78,7 @@ public class BoardManager : MonoBehaviour
     }
 
 
-    public void PlaceTray(Tray tray, Vector2Int gridPos, Vector2Int[] occupiedCells)
+    public void PlaceTray(Tray tray, Vector2Int gridPos, List<Vector2Int> occupiedCells)
     {
         foreach (var cell in occupiedCells)
         {
@@ -103,4 +104,37 @@ public class BoardManager : MonoBehaviour
         if (sweetRays.TryGetValue(gridPos, out SweetRay ray)) return ray;
         return null;
     }
+
+    public void ClearByCount(Tray tray, int length)
+    {
+        int remaining = length;
+
+        foreach (var kvp in sweetRays)
+        {
+            SweetRay ray = kvp.Value;
+
+            while (remaining > 0)
+            {
+                Sweet sweet = ray.PeekSweet();
+                if (sweet == null) break;
+
+                if (sweet.color == tray.trayColor)
+                {
+                    sweet = ray.TakeSweet();
+                    ray.ShiftSweets();
+
+                    remaining--;
+
+                    if (remaining <= 0) break;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (remaining <= 0) break;
+        }
+    }
+
 }

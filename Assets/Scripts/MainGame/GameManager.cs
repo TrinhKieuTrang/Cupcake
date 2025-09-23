@@ -26,6 +26,8 @@ public class GameManager : MonoBehaviour
 
     [Header("Tools")]
     [SerializeField] private bool bombMode = false;
+    [SerializeField] private bool shrinkMode = false;
+
 
 
     private bool isGameOver = false;
@@ -107,14 +109,37 @@ public class GameManager : MonoBehaviour
     {
         if (!bombMode || tray == null) return;
         tray.Boom();
-
+        ClearSweet(tray, tray.SweetCount());
         bombMode = false; 
     }
 
+    public void ClearSweet(Tray tray, int count)
+    {
+        GetComponent<BoardManager>().ClearByCount(tray, count);
+
+    }
 
     public bool IsBombMode()
     {
         return bombMode;
+    }
+
+    public void ActivateShrink()
+    {
+        if (isGameOver) return;
+        shrinkMode = !shrinkMode;
+    }
+
+    public void UseShrinkOnTray(Tray tray)
+    {
+        if (!shrinkMode || tray == null) return;
+        tray.Shrink();
+        shrinkMode = false;
+    }
+
+    public bool IsShrinkMode()
+    {
+        return shrinkMode;
     }
 
     public Vector3 GetPlayerPosition()

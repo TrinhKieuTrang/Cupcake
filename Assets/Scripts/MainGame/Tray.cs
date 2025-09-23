@@ -14,7 +14,7 @@ public class Tray : MonoBehaviour
     private BoardManager board;
     private bool isDragging;
     private Vector2Int startGridPos;
-    [SerializeField] private Vector2Int[] occupiedCells;
+    [SerializeField] private List<Vector2Int> occupiedCells;
 
     private Dictionary<Vector2Int, Sweet> sweetSlots = new Dictionary<Vector2Int, Sweet>();
     public bool IsDone { get; private set; } = false;
@@ -32,9 +32,49 @@ public class Tray : MonoBehaviour
     {
         if (IsDone || isMoving || GameManager.Instance.IsGameOver()) return;
 
-        SweetRay ray = board.GetSweetRayAt(startGridPos);
-        if (ray != null) ray.PickSweet(this);
+        CheckSweetRays(occupiedCells);
     }
+
+    private List<Vector3> GetBorderPositions(List<Vector2Int> occupiedCells)
+    {
+        List<Vector3> borderPositions = new List<Vector3>();
+        Vector2Int[] directions = new Vector2Int[]
+        {
+        Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right
+        };
+
+        for (int i = 0; i < occupiedCells.Count; i++)
+        {
+            Vector2Int cell = occupiedCells[i];
+            foreach (var dir in directions)
+            {
+                Vector2Int neighbor = cell + dir;
+                if (!occupiedCells.Contains(neighbor))
+                {
+                    borderPositions.Add(transform.GetChild(i).position);
+                    break;
+                }
+            }
+        }
+
+        return borderPositions;
+    }
+
+
+    private void CheckSweetRays(List<Vector2Int> occupiedCells)
+    {
+        var borderCells = GetBorderPositions(occupiedCells);
+        foreach (var cell in borderCells)
+        {
+            Vector2Int world = board.WorldToGrid(cell);
+            SweetRay ray = board.GetSweetRayAt(world);
+            if (ray != null)
+            {
+                ray.PickSweet(this);
+            }
+        }
+    }
+
     public void Down()
     {
         if (IsDone || GameManager.Instance.IsGameOver()) return;
@@ -43,6 +83,13 @@ public class Tray : MonoBehaviour
             GameManager.Instance.UseBombOnTray(this);
             return;
         }
+
+        if(GameManager.Instance.IsShrinkMode())
+        {
+            GameManager.Instance.UseShrinkOnTray(this);
+            return;
+        }
+
         isDragging = true;
         UpdateOccupiedCells();
         startGridPos = board.WorldToGrid(transform.position);
@@ -105,6 +152,15 @@ public class Tray : MonoBehaviour
         return null;
     }
 
+    public int SweetCount()
+    {
+        int count = 0;
+        foreach(Transform pos in transform)
+        {
+            if (pos.childCount == 0) count++;
+        }
+        return count;
+    }
     void CheckDone()
     {
         if (IsEmpty() == null && !IsDone)
@@ -119,10 +175,9 @@ public class Tray : MonoBehaviour
 
     void UpdateOccupiedCells()
     {
-        occupiedCells = transform.Cast<Transform>() 
-            .Where(t => t != transform)             
+        occupiedCells = transform.Cast<Transform>()
             .Select(t => board.WorldToGrid(t.position) - board.WorldToGrid(transform.position))
-            .ToArray();
+            .ToList();
     }
 
 
@@ -163,4 +218,43 @@ public class Tray : MonoBehaviour
         });
 
     }
+
+    public void Shrink()
+    {
+        int keepCount = 2;
+        int childCount = transform.childCount;
+        int removed = 0;
+        for (int i = keepCount; i < childCount; i++)
+        {
+            Transform child = transform.GetChild(i);
+            if(child.childCount == 0)
+            {
+                Debug.Log("ec");
+                removed++;
+            }
+
+            child.DOScale(Vector3.zero, 0.2f)
+                .SetEase(Ease.InBack)
+                .OnComplete(() =>
+                {
+                    Destroy(child.gameObject);
+                });
+        }
+
+
+        GameManager.Instance.ClearSweet(this, removed);
+
+        if (transform.childCount >= 2)
+        {
+            transform.GetChild(0).localPosition = new Vector3(0f, 0.05f, 0f);
+            transform.GetChild(1).localPosition = new Vector3(0.1f, 0.05f, 0f);
+        }
+
+        UpdateOccupiedCells();
+
+        startGridPos = board.WorldToGrid(transform.position);
+        board.ClearTray(this);
+        board.PlaceTray(this, startGridPos, occupiedCells);
+    }
+
 }
