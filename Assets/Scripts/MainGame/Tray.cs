@@ -15,8 +15,10 @@ public class Tray : MonoBehaviour
     private bool isDragging;
     private Vector2Int startGridPos;
     [SerializeField] private List<Vector2Int> occupiedCells;
+    private Dictionary<Vector2Int, Transform> cellToTransform = new Dictionary<Vector2Int, Transform>();
 
     private Dictionary<Vector2Int, Sweet> sweetSlots = new Dictionary<Vector2Int, Sweet>();
+
     public bool IsDone { get; private set; } = false;
     public bool isMoving { get; private set; } = false;
 
@@ -43,15 +45,18 @@ public class Tray : MonoBehaviour
         Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right
         };
 
-        for (int i = 0; i < occupiedCells.Count; i++)
+        foreach (var cell in occupiedCells)
         {
-            Vector2Int cell = occupiedCells[i];
             foreach (var dir in directions)
             {
                 Vector2Int neighbor = cell + dir;
                 if (!occupiedCells.Contains(neighbor))
                 {
-                    borderPositions.Add(transform.GetChild(i).position);
+                    if (cellToTransform.TryGetValue(cell, out Transform child))
+                    {
+                        if (child != null)
+                            borderPositions.Add(child.position);
+                    }
                     break;
                 }
             }
@@ -134,6 +139,7 @@ public class Tray : MonoBehaviour
         if(pos != null)
         {
             sweet.transform.SetParent(pos);
+            sweet.transform.DOScale(new Vector3(0.5f, 0.5f, 0.5f), 0.2f).SetEase(Ease.OutBack);
             sweet.transform.DOLocalMove(Vector3.zero, 0.3f).OnComplete(() =>
             {
                 isMoving = false;
@@ -147,7 +153,10 @@ public class Tray : MonoBehaviour
     {
         foreach(Transform pos in transform)
         {
-            if(pos.childCount == 0) return pos;
+            foreach(Transform child in pos)
+            {
+                if (child.childCount == 0) return child;
+            }
         }
         return null;
     }
@@ -175,11 +184,20 @@ public class Tray : MonoBehaviour
 
     void UpdateOccupiedCells()
     {
-        occupiedCells = transform.Cast<Transform>()
-            .Select(t => board.WorldToGrid(t.position) - board.WorldToGrid(transform.position))
-            .ToList();
-    }
+        occupiedCells = new List<Vector2Int>();
+        cellToTransform.Clear();
 
+        Vector2Int trayOrigin = board.WorldToGrid(transform.position);
+
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            Transform child = transform.GetChild(i);
+            Vector2Int gridOffset = board.WorldToGrid(child.position) - trayOrigin;
+
+            occupiedCells.Add(gridOffset);
+            cellToTransform[gridOffset] = child;
+        }
+    }
 
     Vector3 GetMouseWorldPos()
     {
@@ -243,6 +261,11 @@ public class Tray : MonoBehaviour
 
 
         GameManager.Instance.ClearSweet(this, removed);
+
+        DOVirtual.DelayedCall(0.25f, () =>
+        {
+            CheckDone();
+        });
 
         if (transform.childCount >= 2)
         {

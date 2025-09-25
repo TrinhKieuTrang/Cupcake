@@ -1,19 +1,9 @@
 fileFormatVersion: 2
-guid: dd45ae4800196b54a8161cde45b16522
+guid: dbec2122f1f3c4b4b8a929b983a82a07
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: cake
-    second: {fileID: 2100000, guid: 873130ff126ab9e4bb35569d829dfb0b, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: cup pink
-    second: {fileID: 2100000, guid: f1b02485a88703b4186542fb08439a34, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
