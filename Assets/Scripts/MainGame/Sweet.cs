@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum SweetColor { Pink, Blue, Green, Yellow }
+public enum SweetColor { Pink, Brown, Yellow, Green, Purple, Blue, Red, Orange }
 
 public class Sweet : MonoBehaviour
 {

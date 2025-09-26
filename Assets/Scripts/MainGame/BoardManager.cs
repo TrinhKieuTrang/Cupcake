@@ -24,7 +24,7 @@ public class BoardManager : MonoBehaviour
             sweetRays[pos] = ray;
         }
 
-        foreach(Transform trans in board.GetChild(0))
+        foreach(Transform trans in board)
         {
             Vector2Int pos = WorldToGrid(trans.position);
             if (pos.x >= 0 && pos.y >= 0 && pos.x < cols && pos.y < rows)

@@ -99,6 +99,7 @@ public class Tray : MonoBehaviour
         UpdateOccupiedCells();
         startGridPos = board.WorldToGrid(transform.position);
         board.ClearTray(this);
+        OutlineShape(true);
     }
 
     public void Drag()
@@ -129,6 +130,16 @@ public class Tray : MonoBehaviour
     {
         if (IsDone) return;
         isDragging = false;
+        OutlineShape(false);
+    }
+
+    private void OutlineShape(bool enable)
+    {
+        foreach(Transform pos in transform)
+        {
+            var outline = pos.GetComponent<Outline>();
+            outline.enabled = enable;
+        }
     }
 
     public void TryAddSweet(Sweet sweet)
@@ -139,8 +150,8 @@ public class Tray : MonoBehaviour
         if(pos != null)
         {
             sweet.transform.SetParent(pos);
-            sweet.transform.DOScale(new Vector3(0.5f, 0.5f, 0.5f), 0.2f).SetEase(Ease.OutBack);
-            sweet.transform.DOLocalMove(Vector3.zero, 0.3f).OnComplete(() =>
+            sweet.transform.DOScale(new Vector3(0.5f, 0.5f, 0.5f), 0.15f).SetEase(Ease.OutBack);
+            sweet.transform.DOLocalJump(Vector3.zero, 0.1f, 1, 0.25f).OnComplete(() =>
             {
                 isMoving = false;
                 CheckDone();
@@ -178,6 +189,7 @@ public class Tray : MonoBehaviour
             startGridPos = board.WorldToGrid(transform.position);
             board.ClearTray(this);
             DoneAnim();
+            OutlineShape(false);
             GameManager.Instance.CheckGameWin();
         }
     }
@@ -247,7 +259,6 @@ public class Tray : MonoBehaviour
             Transform child = transform.GetChild(i);
             if(child.childCount == 0)
             {
-                Debug.Log("ec");
                 removed++;
             }
 
@@ -269,8 +280,8 @@ public class Tray : MonoBehaviour
 
         if (transform.childCount >= 2)
         {
-            transform.GetChild(0).localPosition = new Vector3(0f, 0.05f, 0f);
-            transform.GetChild(1).localPosition = new Vector3(0.1f, 0.05f, 0f);
+            transform.GetChild(0).localPosition = new Vector3(0f, 0.01f, 0f);
+            transform.GetChild(1).localPosition = new Vector3(0.1f, 0.01f, 0f);
         }
 
         UpdateOccupiedCells();
