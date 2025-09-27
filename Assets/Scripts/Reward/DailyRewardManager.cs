@@ -5,7 +5,7 @@ using System;
 public class DailyRewardManager : MonoBehaviour
 {
     [Header("UI Buttons")]
-    [SerializeField] private Button[] dayButtons;
+    private Button[] dayButtons;
 
     private const string LAST_CLAIM_DATE = "LastClaimDate";
     private const string DAY_INDEX = "DayIndex";
@@ -16,11 +16,18 @@ public class DailyRewardManager : MonoBehaviour
     void Start()
     {
         today = DateTime.Now.Date;
+        dayButtons = new Button[transform.childCount];
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            dayButtons[i] = transform.GetChild(i).GetComponent<Button>();
+        }
         SetupUI();
     }
 
+
     void SetupUI()
     {
+       
         string lastDateStr = PlayerPrefs.GetString(LAST_CLAIM_DATE, "");
         currentDayIndex = PlayerPrefs.GetInt(DAY_INDEX, 0);
 
@@ -49,10 +56,15 @@ public class DailyRewardManager : MonoBehaviour
 
         for (int i = 0; i < dayButtons.Length; i++)
         {
-            int index = i; 
+            int index = i;
             dayButtons[i].interactable = false;
             dayButtons[i].onClick.RemoveAllListeners();
-
+            if (i < currentDayIndex || (i == currentDayIndex && !canClaimToday))
+            {
+                dayButtons[i].interactable = true;
+                dayButtons[i].enabled = false;
+                dayButtons[i].transform.GetChild(0).gameObject.SetActive(true);
+            }
             if (i == currentDayIndex && canClaimToday)
             {
                 dayButtons[i].interactable = true;
@@ -71,9 +83,9 @@ public class DailyRewardManager : MonoBehaviour
         PlayerPrefs.SetString(LAST_CLAIM_DATE, today.ToString());
         PlayerPrefs.Save();
 
-        dayButtons[dayIndex].interactable = false;
+        dayButtons[dayIndex].enabled = false;
+        dayButtons[dayIndex].transform.GetChild(0).gameObject.SetActive(true);
 
-        Debug.Log($"Đã nhận thưởng ngày {dayIndex + 1}");
     }
 
     void GiveReward(int dayIndex)
